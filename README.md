@@ -1,0 +1,135 @@
+# nestjs-shopify-auth
+
+An OAuth setup for NestJS using Shopify's [`shopify-node-api`] package. Allows for online and offline auth using this module. Also adds a GraphQL proxy so you can use online tokens to proxy your GraphQL requests to Shopify, without exposing your Shopify Admin access token to the frontend.
+
+## Installation
+
+Install package using NPM:
+
+```
+npm install @shopify/shopify-api nestjs-shopify-auth
+```
+
+or using Yarn:
+
+```
+yarn add @shopify/shopify-api nestjs-shopify-auth
+```
+
+## Usage
+
+From any module, import the `ShopifyAuthModule` using `registerOnlineAuthAsync` and/or `registerOfflineAuthAsync`:
+
+```ts
+// app.module.ts
+@Module({
+  imports: [
+    ShopifyAuthModule.registerOnlineAuthAsync({
+      useFactory: () => ({
+        basePath: 'user',
+      }),
+    }),
+  ],
+})
+export class AppModule {}
+```
+
+You can provide an injectable that can handle the redirection or any other setup you want after an offline or online auth was successful:
+
+```ts
+// my-shopify-auth.handler.ts
+@Injectable()
+export class MyShopifyAuthHandler implements ShopifyAuthAfterHandler {
+  async afterAuth(req: Request, res: Response, session: SessionInterface) {
+    // implement your logic after a successful auth.
+    // you can check `session.isOnline` to see if it was an online auth or offline auth.
+  }
+}
+```
+
+and provide and inject it to your `ShopifyAuthModule`:
+
+```ts
+// app.module.ts
+import { MyShopifyAuthHandler } from './my-shopify-auth.handler';
+
+@Module({
+  imports: [
+    ShopifyAuthModule.registerOnlineAuthAsync({
+      useFactory: (afterAuthHandler: MyShopifyAuthHandler) => ({
+        basePath: 'user',
+        afterAuthHandler,
+      }),
+      provide: [MyShopifyAuthHandler]
+      inject: [MyShopifyAuthHandler],
+    }),
+  ],
+})
+export class AppModule {}
+```
+
+You can also use `useClass` and `useExisting` to register the `ShopifyAuthModule`. You can even register both auth modes using the same Module:
+
+```ts
+// app.module.ts
+import { MyShopifyAuthHandler } from './my-shopify-auth.handler';
+
+@Module({
+  imports: [
+    ShopifyAuthModule.registerOnlineAuthAsync({
+      useFactory: (afterAuthHandler: MyShopifyAuthHandler) => ({
+        basePath: 'user',
+        afterAuthHandler,
+      }),
+      provide: [MyShopifyAuthHandler]
+      inject: [MyShopifyAuthHandler],
+    }),
+    ShopifyAuthModule.registerOfflineAuthAsync({
+      useFactory: (afterAuthHandler: MyShopifyAuthHandler) => ({
+        basePath: 'shop',
+        afterAuthHandler,
+      }),
+      provide: [MyShopifyAuthHandler]
+      inject: [MyShopifyAuthHandler],
+    }),
+  ],
+})
+export class AppModule {}
+```
+
+Now, if you want to install an App and store the offline access token in your DB, or Redis, or whatever storage you prefer, just visit `/shop/auth?shop=<yourshopname>.myshopify.com`. And if you want to create short-lived online access token, for instance, to only perform one-off requests to Shopify Admin GraphQL, you can visit `/user/auth?shop=<yourshopname>.myshopify.com`.
+
+## GraphQL proxy
+
+This module leverages `@shopify/shopfiy-api` package underneath. That package provides the GraphQL proxy. In order for that proxy to work, you need to disable the JSON body parser middleware for `/graphql` route. Here's how you would do that:
+
+First install the necessary pacakge:
+
+```
+npm install body-parser
+```
+
+Change your app `bootstrap()` function to disable body parsing. And setup your own body parser for all routes, except for `/graphql`:
+
+```ts
+// main.ts
+import { NestFactory } from '@nestjs/core';
+import { json } from 'body-parser';
+import { AppModule } from './app.module';
+
+async function bootstrap() {
+  const jsonParseMiddleware = json();
+
+  const app = await NestFactory.create(AppModule, { bodyParser: false });
+  app.use((req, res, next) => {
+    if (req.path.indexOf('/graphql') === 0) {
+      next();
+    } else {
+      jsonParseMiddleware(req, res, next);
+    }
+  });
+
+  await app.listen(3000);
+}
+bootstrap();
+```
