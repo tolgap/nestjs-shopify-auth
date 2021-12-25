@@ -18,7 +18,7 @@ export class ShopifyOfflineAuthController {
     @Req() req: Request,
     @Res() res: Response,
   ) {
-    await authHandler(req, res, domain, this.options, true);
+    await authHandler(req, res, domain, this.options, false);
   }
 
   @Get('callback')
