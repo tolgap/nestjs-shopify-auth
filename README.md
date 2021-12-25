@@ -1,5 +1,7 @@
 # nestjs-shopify-auth
 
+[![Node.js CI](https://github.com/tolgap/nestjs-shopify-auth/actions/workflows/node.js.yml/badge.svg)](https://github.com/tolgap/nestjs-shopify-auth/actions/workflows/node.js.yml)
+
 An OAuth setup for NestJS using Shopify's [`shopify-node-api`] package. Allows for online and offline auth using this module. Also adds a GraphQL proxy so you can use online tokens to proxy your GraphQL requests to Shopify, without exposing your Shopify Admin access token to the frontend.
 
 ## Installation
@@ -15,6 +17,14 @@ or using Yarn:
 ```
 yarn add @shopify/shopify-api nestjs-shopify-auth
 ```
+
+Make sure you have your Shopify context initialized, [as required in `@shopify/shopify-api`](https://github.com/Shopify/shopify-node-api/blob/main/docs/getting_started.md#set-up-context). You can use the following package to do this is a neat way in NestJS that I've developed as well:
+
+```
+npm install shopify-nestjs-api
+```
+
+See usage: https://github.com/tolgap/shopify-nestjs-api .
 
 ## Usage
 
