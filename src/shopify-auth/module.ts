@@ -15,11 +15,11 @@ export class ShopifyAuthModule implements OnModuleInit {
   ): Promise<DynamicModule> | DynamicModule {
     return {
       module: ShopifyAuthModule,
+      imports: options.imports || [],
       providers: [
         ...(options.providers || []),
         ...createShopifyAuthAsyncOptionsProviders(options, AccessMode.Online),
       ],
-      exports: [],
       controllers: [ShopifyOnlineAuthController, ShopifyGraphQLController],
     };
   }
@@ -29,6 +29,7 @@ export class ShopifyAuthModule implements OnModuleInit {
   ): Promise<DynamicModule> | DynamicModule {
     return {
       module: ShopifyAuthModule,
+      imports: options.imports || [],
       providers: [
         ...(options.providers || []),
         ...createShopifyAuthAsyncOptionsProviders(options, AccessMode.Offline),
