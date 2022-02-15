@@ -7,6 +7,7 @@ import {
   ShopifyOnlineAuthController,
   ShopifyOfflineAuthController,
 } from './controllers';
+import { getShopifyAuthProviderToken } from './constants';
 
 @Module({})
 export class ShopifyAuthModule implements OnModuleInit {
@@ -15,12 +16,14 @@ export class ShopifyAuthModule implements OnModuleInit {
   ): Promise<DynamicModule> | DynamicModule {
     return {
       module: ShopifyAuthModule,
+      global: true,
       imports: options.imports || [],
       providers: [
         ...(options.providers || []),
         ...createShopifyAuthAsyncOptionsProviders(options, AccessMode.Online),
       ],
       controllers: [ShopifyOnlineAuthController, ShopifyGraphQLController],
+      exports: [getShopifyAuthProviderToken(AccessMode.Online)],
     };
   }
 
@@ -29,12 +32,14 @@ export class ShopifyAuthModule implements OnModuleInit {
   ): Promise<DynamicModule> | DynamicModule {
     return {
       module: ShopifyAuthModule,
+      global: true,
       imports: options.imports || [],
       providers: [
         ...(options.providers || []),
         ...createShopifyAuthAsyncOptionsProviders(options, AccessMode.Offline),
       ],
       controllers: [ShopifyOfflineAuthController],
+      exports: [getShopifyAuthProviderToken(AccessMode.Offline)],
     };
   }
 

@@ -59,7 +59,7 @@ export class ShopifyAuthExceptionFilter implements ExceptionFilter {
         .json({
           statusCode: status,
           timestamp: new Date().toISOString(),
-          message: exception.initMessage(),
+          message: exception.message,
         });
     } else if (exception instanceof ReauthRedirectException) {
       const basePath = this.offlineOptions?.basePath || '';
