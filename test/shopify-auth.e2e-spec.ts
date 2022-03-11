@@ -9,6 +9,17 @@ import { Request, Response } from 'express';
 import { Session } from '@shopify/shopify-api/dist/auth/session';
 import { AuthScopes } from '@shopify/shopify-api/dist/auth/scopes';
 
+const mockQuery = jest.fn();
+
+jest.mock('@shopify/shopify-api/dist/clients/graphql', () => ({
+  __esModule: true,
+  GraphqlClient: class MockGraphqlClient {
+    constructor(readonly domain: string, readonly accessToken: string) {}
+
+    query = mockQuery;
+  },
+}));
+
 const TEST_SHOP = 'testing-shop.myshopify.com';
 const nonce = '888491362182521';
 
@@ -127,28 +138,30 @@ describe('ShopifyAuthModule', () => {
     });
 
     describe('POST /graphql', () => {
-      let graphqlSpy: jest.SpyInstance;
-
-      beforeEach(() => {
-        graphqlSpy = jest
-          .spyOn(Shopify.Utils, 'graphqlProxy')
-          .mockImplementation((_req, res) => {
-            res.statusCode = 201;
-            res.end();
-            return Promise.resolve();
-          });
-      });
-
-      afterEach(() => {
-        graphqlSpy.mockClear();
-      });
-
       test('rejects without session', async () => {
         await request(app.getHttpServer()).post('/graphql').expect(403);
       });
 
       describe('with session', () => {
         let sessionSpy: jest.SpyInstance;
+        const successResponse = {
+          data: {
+            shop: {
+              name: 'Shop',
+            },
+          },
+        };
+        const shopQuery = `{
+          shop {
+            name
+          }
+        }`;
+        const objectQuery = {
+          query: shopQuery,
+          variables: `{
+            foo: bar
+          }`,
+        };
 
         beforeEach(() => {
           sessionSpy = jest
@@ -162,12 +175,21 @@ describe('ShopifyAuthModule', () => {
 
         afterEach(() => {
           sessionSpy.mockClear();
+          mockQuery.mockReset();
         });
 
         test('passes request to graphql proxy', async () => {
-          await request(app.getHttpServer()).post('/graphql').expect(201);
+          mockQuery.mockResolvedValue({
+            body: JSON.stringify(successResponse),
+          });
 
-          expect(graphqlSpy).toHaveBeenCalled();
+          const response = await request(app.getHttpServer())
+            .post('/graphql')
+            .send(objectQuery)
+            .set('Content-Type', 'application/json')
+            .expect(200);
+
+          expect(JSON.parse(response.text)).toEqual(successResponse);
         });
       });
     });
