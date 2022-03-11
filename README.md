@@ -111,35 +111,4 @@ Now, if you want to install an App and store the offline access token in your DB
 
 ## GraphQL proxy
 
-This module leverages `@shopify/shopfiy-api` package underneath. That package provides the GraphQL proxy. In order for that proxy to work, you need to disable the JSON body parser middleware for `/graphql` route. Here's how you would do that:
-
-First install the necessary pacakge:
-
-```
-npm install body-parser
-```
-
-Change your app `bootstrap()` function to disable body parsing. And setup your own body parser for all routes, except for `/graphql`:
-
-```ts
-// main.ts
-import { NestFactory } from '@nestjs/core';
-import { json } from 'body-parser';
-import { AppModule } from './app.module';
-
-async function bootstrap() {
-  const jsonParseMiddleware = json();
-
-  const app = await NestFactory.create(AppModule, { bodyParser: false });
-  app.use((req, res, next) => {
-    if (req.path.indexOf('/graphql') === 0) {
-      next();
-    } else {
-      jsonParseMiddleware(req, res, next);
-    }
-  });
-
-  await app.listen(3000);
-}
-bootstrap();
-```
+This module automatically attaches a GraphQL endpoint to `/graphql` if you register online auth. You will need valid online auth tokens to make use of it.
