@@ -3,6 +3,7 @@ import {
   Post,
   Req,
   Res,
+  UnauthorizedException,
   UseFilters,
   UseGuards,
 } from '@nestjs/common';
@@ -17,6 +18,27 @@ export class ShopifyGraphQLController {
   @UseFilters(ShopifyAuthExceptionFilter)
   @UseGuards(ShopifyAuthGuard)
   async graphql(@Req() req: Request, @Res() res: Response) {
-    await Shopify.Utils.graphqlProxy(req, res);
+    const session = await Shopify.Utils.loadCurrentSession(req, res);
+
+    if (!session) {
+      throw new UnauthorizedException('Cannot proxy query. No session found.');
+    }
+
+    const { shop, accessToken } = session;
+    if (!accessToken) {
+      throw new UnauthorizedException(
+        'Cannot proxy query. Session not authenticated.',
+      );
+    }
+
+    const data = req.body;
+    const client = new Shopify.Clients.Graphql(shop, accessToken);
+    const response = await client.query({
+      data,
+    });
+
+    console.log(response);
+
+    res.status(200).send(response.body);
   }
 }
