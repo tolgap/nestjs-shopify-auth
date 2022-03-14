@@ -37,8 +37,6 @@ export class ShopifyGraphQLController {
       data,
     });
 
-    console.log(response);
-
     res.status(200).send(response.body);
   }
 }
