@@ -1,15 +1,26 @@
 import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
+import { Reflector } from '@nestjs/core';
 import Shopify from '@shopify/shopify-api';
 import { Request, Response } from 'express';
+import { AUTH_MODE_KEY } from './constants';
 import { ReauthHeaderException, ReauthRedirectException } from './exceptions';
+import { AccessMode } from './interfaces';
 
 @Injectable()
 export class ShopifyAuthGuard implements CanActivate {
-  async canActivate(context: ExecutionContext): Promise<boolean> {
-    const req = context.switchToHttp().getRequest<Request>();
-    const res = context.switchToHttp().getResponse<Response>();
+  constructor(private readonly reflector: Reflector) {}
 
-    const session = await Shopify.Utils.loadCurrentSession(req, res);
+  async canActivate(ctx: ExecutionContext): Promise<boolean> {
+    const http = ctx.switchToHttp();
+    const req = http.getRequest<Request>();
+    const res = http.getResponse<Response>();
+
+    const requiredAccessMode = this.reflector.getAllAndOverride<AccessMode>(
+      AUTH_MODE_KEY,
+      [ctx.getHandler(), ctx.getClass()],
+    );
+    const isOnline = requiredAccessMode === AccessMode.Online;
+    const session = await Shopify.Utils.loadCurrentSession(req, res, isOnline);
 
     if (session) {
       const scopesChanged = !Shopify.Context.SCOPES.equals(session.scope);
@@ -41,10 +52,12 @@ export class ShopifyAuthGuard implements CanActivate {
       if (shop) {
         throw new ReauthHeaderException(shop);
       }
-    } else if (req.query.shop) {
-      shop = req.query.shop.toString() || process.env.SHOP;
+    } else if (!isOnline) {
+      shop = req.query.shop?.toString() || process.env.SHOP;
 
-      throw new ReauthRedirectException(shop);
+      if (shop) {
+        throw new ReauthRedirectException(shop);
+      }
     }
 
     return false;

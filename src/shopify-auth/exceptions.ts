@@ -4,9 +4,8 @@ import {
   ExceptionFilter,
   HttpException,
   HttpStatus,
-  Inject,
-  Optional,
 } from '@nestjs/common';
+import { ModuleRef } from '@nestjs/core';
 import { Request, Response } from 'express';
 import { SHOPIFY_AUTH_OFFLINE, SHOPIFY_AUTH_ONLINE } from './constants';
 import { ShopifyAuthModuleOptions } from './interfaces';
@@ -30,14 +29,7 @@ export class ReauthRedirectException extends ShopifyAuthException {
 
 @Catch(ShopifyAuthException)
 export class ShopifyAuthExceptionFilter implements ExceptionFilter {
-  constructor(
-    @Optional()
-    @Inject(SHOPIFY_AUTH_ONLINE)
-    private onlineOptions: ShopifyAuthModuleOptions,
-    @Optional()
-    @Inject(SHOPIFY_AUTH_OFFLINE)
-    private offlineOptions: ShopifyAuthModuleOptions,
-  ) {}
+  constructor(private readonly moduleRef: ModuleRef) {}
 
   catch(exception: ShopifyAuthException, host: ArgumentsHost) {
     const context = host.switchToHttp();
@@ -48,8 +40,13 @@ export class ShopifyAuthExceptionFilter implements ExceptionFilter {
     const domain = `https://${req.hostname}`;
 
     if (exception instanceof ReauthHeaderException) {
+      const onlineOptions = this.moduleRef.get<ShopifyAuthModuleOptions>(
+        SHOPIFY_AUTH_ONLINE,
+        { strict: true },
+      );
+
       const status = exception.getStatus();
-      const basePath = this.onlineOptions?.basePath || '';
+      const basePath = onlineOptions?.basePath || '';
       const baseUrl = new URL(basePath, domain).href;
       const authUrl = `${baseUrl}/auth?shop=${exception.shop}`;
       res
@@ -62,7 +59,12 @@ export class ShopifyAuthExceptionFilter implements ExceptionFilter {
           message: exception.message,
         });
     } else if (exception instanceof ReauthRedirectException) {
-      const basePath = this.offlineOptions?.basePath || '';
+      const offlineOptions = this.moduleRef.get<ShopifyAuthModuleOptions>(
+        SHOPIFY_AUTH_OFFLINE,
+        { strict: true },
+      );
+
+      const basePath = offlineOptions?.basePath || '';
       const baseUrl = new URL(basePath, domain).href;
       const authUrl = `${baseUrl}/auth?shop=${exception.shop}`;
       res.redirect(authUrl);

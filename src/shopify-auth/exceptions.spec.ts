@@ -1,3 +1,5 @@
+import { ModuleRef } from '@nestjs/core';
+import { SHOPIFY_AUTH_OFFLINE, SHOPIFY_AUTH_ONLINE } from './constants';
 import {
   ReauthHeaderException,
   ReauthRedirectException,
@@ -43,8 +45,22 @@ const mockArgumentsHost = {
   switchToWs: jest.fn(),
 };
 
+const moduleRef = {
+  get: jest.fn().mockImplementation((token: string) => {
+    if (token === SHOPIFY_AUTH_ONLINE) {
+      return onlineOptions;
+    } else if (token === SHOPIFY_AUTH_OFFLINE) {
+      return offlineOptions;
+    } else {
+      throw new Error('Unknown token asked from exception filter');
+    }
+  }),
+};
+
 describe('ShopifyAuthExceptionFilter', () => {
-  const filter = new ShopifyAuthExceptionFilter(onlineOptions, offlineOptions);
+  const filter = new ShopifyAuthExceptionFilter(
+    moduleRef as unknown as ModuleRef,
+  );
 
   it('should be defined', () => {
     expect(filter).toBeDefined();
