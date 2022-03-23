@@ -1,6 +1,6 @@
 {
   "name": "nestjs-shopify-auth",
-  "version": "2.0.1",
+  "version": "2.1.0",
   "description": "Enable Shopify OAuth in NestJS. Wraps @shopify/shopify-api under the hood.",
   "main": "dist/index.js",
   "readme": "README.md",
