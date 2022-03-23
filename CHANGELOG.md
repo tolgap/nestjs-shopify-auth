@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+# Unreleased
+
+### Added
+
+- Add metadata to figure out AccessMode of a controller
+- Add `@UseShopifyAuth` decorator for usage in controllers to check for Online or Offline sessions
+
+### Other
+
+- Refactoring to simplify `ShopfiyAuthExceptionFilter` testing
+
 # 2.0.1
 
 ### Fixed
