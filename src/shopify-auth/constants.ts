@@ -1,5 +1,7 @@
 import { AccessMode } from './interfaces';
 
+export const AUTH_MODE_KEY = 'shopify:authMode';
+
 export const SHOPIFY_AUTH_ONLINE = 'SHOPIFY_AUTH_ONLINE';
 export const SHOPIFY_AUTH_OFFLINE = 'SHOPIFY_AUTH_OFFLINE';
 

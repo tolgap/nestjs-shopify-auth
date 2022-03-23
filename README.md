@@ -109,6 +109,31 @@ export class AppModule {}
 
 Now, if you want to install an App and store the offline access token in your DB, or Redis, or whatever storage you prefer, just visit `/shop/auth?shop=<yourshopname>.myshopify.com`. And if you want to create short-lived online access token, for instance, to only perform one-off requests to Shopify Admin GraphQL, you can visit `/user/auth?shop=<yourshopname>.myshopify.com`.
 
+### Authentication
+
+When `ShopifyAuthModule` is setup, you can use `@UseShopifyAuth()` to require online or offline session in Controllers or specific routes. Example:
+
+```ts
+import { AccessMode } from '@shopify/shopify-api';
+import { Controller, Get } from '@nestjs/common';
+
+@UseShopifyAuth(AccessMode.Online)
+@Controller()
+export class AppController {
+  @Get('online-route')
+  hello() {
+    return 'you are using online auth!';
+  }
+
+  @Get('offline-route')
+  // Overriding the controller access mode:
+  @UseShopifyAuth(AccessMode.Offline)
+  offline() {
+    return 'you are using offline auth!';
+  }
+}
+```
+
 ## GraphQL proxy
 
 This module automatically attaches a GraphQL endpoint to `/graphql` if you register online auth. You will need valid online auth tokens to make use of it.

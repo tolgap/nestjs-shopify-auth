@@ -1,6 +1,17 @@
-import { createParamDecorator, ExecutionContext } from '@nestjs/common';
+import {
+  applyDecorators,
+  createParamDecorator,
+  ExecutionContext,
+  SetMetadata,
+  UseFilters,
+  UseGuards,
+} from '@nestjs/common';
 import Shopify from '@shopify/shopify-api';
 import { Request, Response } from 'express';
+import { AUTH_MODE_KEY } from './constants';
+import { ShopifyAuthExceptionFilter } from './exceptions';
+import { ShopifyAuthGuard } from './guard';
+import { AccessMode } from './interfaces';
 
 export const Shop = createParamDecorator<
   unknown,
@@ -13,3 +24,10 @@ export const Shop = createParamDecorator<
   const session = await Shopify.Utils.loadCurrentSession(req, res);
   return session.shop;
 });
+
+export const UseShopifyAuth = (accessMode?: AccessMode) =>
+  applyDecorators(
+    SetMetadata(AUTH_MODE_KEY, accessMode || AccessMode.Online),
+    UseGuards(ShopifyAuthGuard),
+    UseFilters(ShopifyAuthExceptionFilter),
+  );
