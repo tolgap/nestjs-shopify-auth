@@ -1,3 +1,4 @@
+import { ApplicationConfig } from '@nestjs/core';
 import Shopify from '@shopify/shopify-api';
 import { Session } from '@shopify/shopify-api/dist/auth/session';
 import { Request, Response } from 'express';
@@ -28,9 +29,10 @@ describe('ShopifyOfflineAuthController', () => {
   let beginAuthSpy: jest.SpyInstance;
   let validateAuthSpy: jest.SpyInstance;
   let controller: ShopifyOfflineAuthController;
+  const appConfig = new ApplicationConfig();
 
   beforeEach(() => {
-    controller = new ShopifyOfflineAuthController(options);
+    controller = new ShopifyOfflineAuthController(options, appConfig);
     beginAuthSpy = jest
       .spyOn(Shopify.Auth, 'beginAuth')
       .mockResolvedValue(authUrl);
@@ -52,7 +54,7 @@ describe('ShopifyOfflineAuthController', () => {
       req,
       res,
       TEST_SHOP,
-      'shop/callback',
+      '/shop/callback',
       false,
     );
 
