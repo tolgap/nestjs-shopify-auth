@@ -201,7 +201,7 @@ describe('ShopifyAuthModule', () => {
       '/admin/oauth/authorize' +
       '?client_id=foo' +
       '&scope=write_shipping' +
-      '&redirect_uri=https%3A%2F%2Flocalhost%3A8082shop%2Fcallback' +
+      '&redirect_uri=https%3A%2F%2Flocalhost%3A8082%2Fshopify%2Fshop%2Fcallback' +
       `&state=${nonce}`;
 
     beforeAll(async () => {
@@ -219,6 +219,7 @@ describe('ShopifyAuthModule', () => {
       }).compile();
 
       app = moduleRef.createNestApplication();
+      app.setGlobalPrefix('shopify');
       await app.init();
     });
 
@@ -226,22 +227,22 @@ describe('ShopifyAuthModule', () => {
       await app.close();
     });
 
-    test('/GET /shop/auth', async () => {
+    test('/GET /shopify/shop/auth', async () => {
       beginAuthSpy.mockResolvedValue(authRedirectUrl);
 
       const res = await request(app.getHttpServer())
-        .get('/shop/auth')
+        .get('/shopify/shop/auth')
         .query({ shop: TEST_SHOP })
         .expect(302);
 
       expect(res.headers.location).toEqual(authRedirectUrl);
     });
 
-    test('/GET /shop/callback', async () => {
+    test('/GET /shopify/shop/callback', async () => {
       validateAuthSpy.mockResolvedValue(offlineSession);
 
       const res = await request(app.getHttpServer())
-        .get('/shop/callback')
+        .get('/shopify/shop/callback')
         .query({
           shop: TEST_SHOP,
           state: nonce,

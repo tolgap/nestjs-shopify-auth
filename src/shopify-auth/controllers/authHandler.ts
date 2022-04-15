@@ -8,9 +8,13 @@ export async function authHandler(
   domain: string,
   options: ShopifyAuthModuleOptions,
   isOnline = true,
+  globalPrefix = '',
 ) {
   const { basePath } = options;
-  const redirectUrl = `${basePath}/callback`;
+  const redirectUrl = `${globalPrefix}/${basePath}/callback`.replace(
+    /\/\//g,
+    '/',
+  );
 
   const oauthUrl = await Shopify.Auth.beginAuth(
     req,
