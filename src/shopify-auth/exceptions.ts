@@ -5,10 +5,11 @@ import {
   HttpException,
   HttpStatus,
 } from '@nestjs/common';
-import { ModuleRef } from '@nestjs/core';
+import { ApplicationConfig, ModuleRef } from '@nestjs/core';
 import { Request, Response } from 'express';
 import { SHOPIFY_AUTH_OFFLINE, SHOPIFY_AUTH_ONLINE } from './constants';
 import { ShopifyAuthModuleOptions } from './interfaces';
+import { joinUrl } from './utils/join-url.util';
 
 export class ShopifyAuthException extends HttpException {
   constructor(message = 'Unauthorized') {
@@ -29,7 +30,10 @@ export class ReauthRedirectException extends ShopifyAuthException {
 
 @Catch(ShopifyAuthException)
 export class ShopifyAuthExceptionFilter implements ExceptionFilter {
-  constructor(private readonly moduleRef: ModuleRef) {}
+  constructor(
+    private readonly moduleRef: ModuleRef,
+    private readonly appConfig: ApplicationConfig,
+  ) {}
 
   catch(exception: ShopifyAuthException, host: ArgumentsHost) {
     const context = host.switchToHttp();
@@ -46,9 +50,12 @@ export class ShopifyAuthExceptionFilter implements ExceptionFilter {
       );
 
       const status = exception.getStatus();
-      const basePath = onlineOptions?.basePath || '';
-      const baseUrl = new URL(basePath, domain).href;
-      const authUrl = `${baseUrl}/auth?shop=${exception.shop}`;
+      const prefix = this.appConfig.getGlobalPrefix();
+      const basePath = onlineOptions.basePath || '';
+      const authPath = `auth?shop=${exception.shop}`;
+      const redirectPath = joinUrl(prefix, basePath, authPath);
+      const authUrl = new URL(redirectPath, domain).toString();
+
       res
         .status(status)
         .setHeader('X-Shopify-Api-Request-Failure-Reauthorize', '1')
@@ -64,9 +71,12 @@ export class ShopifyAuthExceptionFilter implements ExceptionFilter {
         { strict: true },
       );
 
-      const basePath = offlineOptions?.basePath || '';
-      const baseUrl = new URL(basePath, domain).href;
-      const authUrl = `${baseUrl}/auth?shop=${exception.shop}`;
+      const prefix = this.appConfig.getGlobalPrefix();
+      const basePath = offlineOptions.basePath || '';
+      const authPath = `auth?shop=${exception.shop}`;
+      const redirectPath = joinUrl(prefix, basePath, authPath);
+      const authUrl = new URL(redirectPath, domain).toString();
+
       res.redirect(authUrl);
     } else {
       res.json({
