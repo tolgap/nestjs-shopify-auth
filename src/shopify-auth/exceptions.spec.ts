@@ -1,4 +1,4 @@
-import { ModuleRef } from '@nestjs/core';
+import { ApplicationConfig, ModuleRef } from '@nestjs/core';
 import { SHOPIFY_AUTH_OFFLINE, SHOPIFY_AUTH_ONLINE } from './constants';
 import {
   ReauthHeaderException,
@@ -58,8 +58,10 @@ const moduleRef = {
 };
 
 describe('ShopifyAuthExceptionFilter', () => {
+  const appConfig = new ApplicationConfig();
   const filter = new ShopifyAuthExceptionFilter(
     moduleRef as unknown as ModuleRef,
+    appConfig,
   );
 
   it('should be defined', () => {
