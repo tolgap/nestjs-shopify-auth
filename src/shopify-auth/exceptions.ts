@@ -42,7 +42,7 @@ export class ShopifyAuthExceptionFilter implements ExceptionFilter {
     if (exception instanceof ReauthHeaderException) {
       const onlineOptions = this.moduleRef.get<ShopifyAuthModuleOptions>(
         SHOPIFY_AUTH_ONLINE,
-        { strict: true },
+        { strict: false },
       );
 
       const status = exception.getStatus();
