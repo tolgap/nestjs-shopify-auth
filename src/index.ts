@@ -6,5 +6,5 @@ export {
   ReauthRedirectException,
   ReauthHeaderException,
 } from './shopify-auth/exceptions';
-export { Shop } from './shopify-auth/decorators';
+export * from './shopify-auth/decorators';
 export { ShopifyAuthModule } from './shopify-auth/module';
